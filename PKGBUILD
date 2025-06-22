@@ -1,259 +1,586 @@
-# Maintainer: Jan Alexander Steffens (heftig) <heftig@archlinux.org>
+# SPDX-License-Identifier: AGPL-3.0
 
-pkgbase=linux
-pkgver=6.15.3.arch1
+#    ----------------------------------------------------------------------
+#    Copyright © 2024, 2025  Pellegrino Prevete
+#
+#    All rights reserved
+#    ----------------------------------------------------------------------
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU Affero General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU Affero General Public License for more details.
+#
+#    You should have received a copy of the GNU Affero General Public License
+#    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+# Maintainer:
+#   Truocolo
+#     <truocolo@aol.com>
+#     <truocolo@0x6E5163fC4BFc1511Dbe06bB605cc14a3e462332b>
+# Maintainer:
+#   Pellegrino Prevete (dvorak)
+#     <pellegrinoprevete@gmail.com>
+#     <dvorak@0x87003Bd6C074C713783df04f36517451fF34CBEf>
+# Maintainer:
+#   Jan Alexander Steffens (heftig)
+#     <heftig@archlinux.org>
+
+_evmfs_available="$( \
+  command \
+    -v \
+    "evmfs" || \
+    true)"
+if [[ ! -v "_evmfs" ]]; then
+  if [[ "${_evmfs_available}" != "" ]]; then
+    _evmfs="true"
+  elif [[ "${_evmfs_available}" == "" ]]; then
+    _evmfs="false"
+  fi
+fi
+if [[ ! -v "_git" ]]; then
+  _git="false"
+fi
+if [[ ! -v "_docs" ]]; then
+  _docs="false"
+fi
+_py="python"
+_pkg=linux
+pkgbase="${_pkg}"
+pkgver="6.15.3.arch1"
 pkgrel=1
-pkgdesc='Linux'
-url='https://github.com/archlinux/linux'
-arch=(x86_64)
-license=(GPL-2.0-only)
+_pkgdesc=(
+  'The Linux kernel.'
+)
+pkgdesc="${_pkgdesc[*]}"
+_http="https://github.com"
+_ns="archlinux"
+url="${_http}/${_ns}/${_pkg}"
+arch=(
+  'i686'
+  'powerpc'
+  'x86_64'
+)
+license=(
+  'GPL-2.0-only'
+)
 makedepends=(
-  bc
-  cpio
-  gettext
-  libelf
-  pahole
-  perl
-  python
-  rust
-  rust-bindgen
-  rust-src
-  tar
-  xz
-
-  # htmldocs
-  graphviz
-  imagemagick
-  python-sphinx
-  python-yaml
-  texlive-latexextra
+  "bc"
+  "cpio"
+  "gettext"
+  "libelf"
+  "pahole"
+  "perl"
+  "${_py}"
+  "rust"
+  "rust-bindgen"
+  "rust-src"
+  "tar"
+  "xz"
 )
+if [[ "${_docs}" == "true" ]]; then
+  makedepends+=(
+    # htmldocs
+    "graphviz"
+    "imagemagick"
+    "${_py}-sphinx"
+    "${_py}-yaml"
+    "texlive-latexextra"
+  )
+fi
 options=(
-  !debug
-  !strip
+  "!debug"
+  "!strip"
 )
-_srcname=linux-${pkgver%.*}
-_srctag=v${pkgver%.*}-${pkgver##*.}
+_sum='12b50c89925438d9cd7385a0cafc9c433e6562ac5df00a21889fce9f548d65b0'
+_patch_sum='70f591ba14be9789caa2affc5a5f9e404f9753ecd7ae1ef2fcbafeb285f590dd'
+_config_sum='eed83e8a6c1524a7ad7e5d836cc6d7fa291b7c8e205dd7dd68dffaae22b77812'
+_srcname="${_pkg}-${pkgver%.*}"
+_tarname="${_srcname}"
+_srctag="v${pkgver%.*}-${pkgver##*.}"
+_tag_name="pkgver"
+_tag="${_srctag}"
+_domain="https://cdn.kernel.org"
+_http_archive_dir="https://cdn.${_domain}/pub/${_pkg}/kernel"
+_http_uri="${_http_archive_dir}/v${pkgver%%.*}.x/${_tarname}.tar.xz"
+_http_sig_uri="${_http_archive_dir}/v${pkgver%%.*}.x/${_srcname}.tar.sign"
+_http_src="${_tarname}.tar.xz::${_http_uri}"
+_http_sig_src="${_tarname}.tar.sign::${_http_sig_uri}"
+_http_patch_dir="${url}/releases/download"
+_http_patch_uri="${_http_patch_dir}/${_tag}/${_pkg}-${_tag}.patch.zst"
+_http_patch_sig_uri="${_http_patch_uri}.sig"
+_http_patch_src="${_tarname}.tar.sign::${_http_sig_uri}"
+_http_patch_sig_uri="${_http_patch_uri}.sig"
+_http_patch_src="${_pkg}-${_tag}.patch.zst::${_http_patch_uri}"
+_http_patch_sig_src="${_pkg}-${_tag}.patch.zst.sig::${_http_patch_sig_uri}"
+_patch_uri=""
+if [[ "${_git}" == "false" ]]; then
+  _src="${_http_src}"
+  _sig_src="${_http_sig_src}"
+  _patch_uri="${_http_patch_uri}"
+  _patch_sig_uri="${_http_patch_sig_uri}"
+fi
 source=(
-  https://cdn.kernel.org/pub/linux/kernel/v${pkgver%%.*}.x/${_srcname}.tar.{xz,sign}
-  $url/releases/download/$_srctag/linux-$_srctag.patch.zst{,.sig}
-  config  # the main kernel config file
+  "${_src}"
+  "${_sig_src}"
+  "${url}/releases/download/${_srctag}/${_pkg}-${_srctag}.patch.zst"
+  # the main kernel config file
+  "config"
 )
 validpgpkeys=(
-  ABAF11C65A2970B130ABE3C479BE3E4300411886  # Linus Torvalds
-  647F28654894E3BD457199BE38DBBDC86092693E  # Greg Kroah-Hartman
-  83BC8889351B5DEBBB68416EB8AC08600F108CDF  # Jan Alexander Steffens (heftig)
+  # Linus Torvalds
+  "ABAF11C65A2970B130ABE3C479BE3E4300411886"
+  # Greg Kroah-Hartman
+  "647F28654894E3BD457199BE38DBBDC86092693E"
+  # Jan Alexander Steffens (heftig)
+  "83BC8889351B5DEBBB68416EB8AC08600F108CDF"
 )
 # https://www.kernel.org/pub/linux/kernel/v6.x/sha256sums.asc
-sha256sums=('12b50c89925438d9cd7385a0cafc9c433e6562ac5df00a21889fce9f548d65b0'
-            'SKIP'
-            '70f591ba14be9789caa2affc5a5f9e404f9753ecd7ae1ef2fcbafeb285f590dd'
-            'SKIP'
-            'eed83e8a6c1524a7ad7e5d836cc6d7fa291b7c8e205dd7dd68dffaae22b77812')
-b2sums=('a37548adb40b1800f41dd3980d8a2c6d16955548a8c8e02213e2f93b7e57b7320d1ed29749a818635bc8df0c8fe169f9ad3895a64db3a8c9109506682c155790'
-        'SKIP'
-        'd0176512ade0921bafd2410707ef860e89eeed7b92da15f36494449e71f829e3e071dd684cb3617855b8f761317951ef78aff6078da1adc2396b0ada1101c033'
-        'SKIP'
-        'd024109a908086d8220c02458bf669a4ba6167f3b12e27233a248454c9b8cd8aa3de9fc2d187caa617514da6ff349c1083544827354f9096de82196c793637fb')
+sha256sums=(
+  "${_sum}"
+  'SKIP'
+  "${_patch_sum}"
+  'SKIP'
+  "${_config_sum}"
+)
+b2sums=(
+  'a37548adb40b1800f41dd3980d8a2c6d16955548a8c8e02213e2f93b7e57b7320d1ed29749a818635bc8df0c8fe169f9ad3895a64db3a8c9109506682c155790'
+  'SKIP'
+  'd0176512ade0921bafd2410707ef860e89eeed7b92da15f36494449e71f829e3e071dd684cb3617855b8f761317951ef78aff6078da1adc2396b0ada1101c033'
+  'SKIP'
+  'd024109a908086d8220c02458bf669a4ba6167f3b12e27233a248454c9b8cd8aa3de9fc2d187caa617514da6ff349c1083544827354f9096de82196c793637fb'
+)
 
-export KBUILD_BUILD_HOST=archlinux
-export KBUILD_BUILD_USER=$pkgbase
-export KBUILD_BUILD_TIMESTAMP="$(date -Ru${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH})"
+export \
+  KBUILD_BUILD_HOST="archlinux" \
+  KBUILD_BUILD_USER="${pkgbase}" \
+  KBUILD_BUILD_TIMESTAMP="$( \
+    date \
+      -Ru"${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH}")"
 
 prepare() {
-  cd $_srcname
-
-  echo "Setting version..."
-  echo "-$pkgrel" > localversion.10-pkgrel
-  echo "${pkgbase#linux}" > localversion.20-pkgname
-
-  local src
+  local \
+    src
+  cd \
+    "${_tarname}"
+  echo \
+    "Setting version..."
+  echo \
+    "-$pkgrel" > \
+    "localversion.10-pkgrel"
+  echo \
+    "${pkgbase#linux}" > \
+    "localversion.20-pkgname"
   for src in "${source[@]}"; do
     src="${src%%::*}"
     src="${src##*/}"
     src="${src%.zst}"
-    [[ $src = *.patch ]] || continue
-    echo "Applying patch $src..."
-    patch -Np1 < "../$src"
+    [[ "${src}" = *.patch ]] || \
+    continue
+    echo \
+      "Applying patch ${src}..."
+    patch \
+      -Np1 < \
+      "../${src}"
   done
-
-  echo "Setting config..."
-  cp ../config .config
-  make olddefconfig
-  diff -u ../config .config || :
-
-  make -s kernelrelease > version
-  echo "Prepared $pkgbase version $(<version)"
+  echo \
+    "Setting config..."
+  cp \
+    "../config" \
+    ".config"
+  make \
+    olddefconfig
+  diff \
+    -u \
+    "../config" \
+    ".config" || :
+  make \
+    -s \
+    kernelrelease > \
+    "version"
+  echo \
+    "Prepared ${pkgbase} version $(<version)."
 }
 
 build() {
-  cd $_srcname
-  make all
-  make -C tools/bpf/bpftool vmlinux.h feature-clang-bpf-co-re=1
-  make htmldocs
+  cd \
+    "${_tarname}"
+  make \
+    all
+  make \
+    -C \
+      "tools/bpf/bpftool" \
+    "vmlinux.h" \
+    feature-clang-bpf-co-re=1
+  if [[ "${_docs}" == "true" ]]; then
+    make \
+      htmldocs
+  fi
 }
 
 _package() {
-  pkgdesc="The $pkgdesc kernel and modules"
+  local \
+    modulesdir
+  modulesdir="${pkgdir}/usr/lib/modules/$(<version)"
+  _pkgdesc=(
+    "The Linux kernel and modules."
+  )
+  pkgdesc="${_pkgdesc[*]}"
   depends=(
-    coreutils
-    initramfs
-    kmod
+    "coreutils"
+    "initramfs"
+    "kmod"
   )
   optdepends=(
-    'linux-firmware: firmware images needed for some devices'
-    'scx-scheds: to use sched-ext schedulers'
-    'wireless-regdb: to set the correct wireless channels of your country'
+    'linux-firmware: Firmware images needed for some devices.'
+    'scx-scheds: To use sched-ext schedulers.'
+    'wireless-regdb: To set the correct wireless channels of your country.'
   )
   provides=(
-    KSMBD-MODULE
-    NTSYNC-MODULE
-    VIRTUALBOX-GUEST-MODULES
-    WIREGUARD-MODULE
+    "KSMBD-MODULE"
+    "NTSYNC-MODULE"
+    "VIRTUALBOX-GUEST-MODULES"
+    "WIREGUARD-MODULE"
   )
   replaces=(
-    virtualbox-guest-modules-arch
-    wireguard-arch
+    "virtualbox-guest-modules-arch"
+    "wireguard-arch"
   )
-
-  cd $_srcname
-  local modulesdir="$pkgdir/usr/lib/modules/$(<version)"
-
-  echo "Installing boot image..."
-  # systemd expects to find the kernel here to allow hibernation
+  cd \
+    "${_tarname}"
+  echo \
+    "Installing boot image..."
+  # systemd expects to find the kernel
+  # here to allow hibernation
   # https://github.com/systemd/systemd/commit/edda44605f06a41fb86b7ab8128dcf99161d2344
-  install -Dm644 "$(make -s image_name)" "$modulesdir/vmlinuz"
-
+  install \
+    -vDm644 \
+    "$(make \
+         -s \
+         image_name)" \
+    "${modulesdir}/vmlinuz"
   # Used by mkinitcpio to name the kernel
-  echo "$pkgbase" | install -Dm644 /dev/stdin "$modulesdir/pkgbase"
-
-  echo "Installing modules..."
-  ZSTD_CLEVEL=19 make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 \
-    DEPMOD=/doesnt/exist modules_install  # Suppress depmod
-
+  echo \
+    "${pkgbase}" | \
+    install \
+      -vDm644 \
+      "/dev/stdin" \
+      "${modulesdir}/pkgbase"
+  echo \
+    "Installing modules..."
+  ZSTD_CLEVEL=19 \
+  # Suppress depmod
+  make \
+    INSTALL_MOD_PATH="${pkgdir}/usr" \
+    INSTALL_MOD_STRIP=1 \
+    DEPMOD="/doesnt/exist" \
+    modules_install  
   # remove build link
-  rm "$modulesdir"/build
+  rm \
+    "${modulesdir}/build"
 }
 
 _package-headers() {
-  pkgdesc="Headers and scripts for building modules for the $pkgdesc kernel"
-  depends=(pahole)
-
-  cd $_srcname
-  local builddir="$pkgdir/usr/lib/modules/$(<version)/build"
-
-  echo "Installing build files..."
-  install -Dt "$builddir" -m644 .config Makefile Module.symvers System.map \
-    localversion.* version vmlinux tools/bpf/bpftool/vmlinux.h
-  install -Dt "$builddir/kernel" -m644 kernel/Makefile
-  install -Dt "$builddir/arch/x86" -m644 arch/x86/Makefile
-  cp -t "$builddir" -a scripts
-  ln -srt "$builddir" "$builddir/scripts/gdb/vmlinux-gdb.py"
-
+  local \
+    arch \
+    builddir \
+    file
+  builddir="${pkgdir}/usr/lib/modules/$(<version)/build"
+  _pkgdesc=(
+    "Headers and scripts for"
+    "building modules for the"
+    "Linux kernel."
+  )
+  pkgdesc="${_pkg[*]}"
+  depends=(
+    "pahole"
+  )
+  cd \
+    "${_tarname}"
+  echo \
+    "Installing build files..."
+  install \
+    -vDt \
+    "${builddir}" \
+    -m644 \
+    ".config" \
+    "Makefile" \
+    "Module.symvers" \
+    "System.map" \
+    "localversion."* \
+    "version" \
+    "vmlinux" \
+    "tools/bpf/bpftool/vmlinux.h"
+  install \
+    -vDt \
+    "${builddir}/kernel" \
+    -m644 \
+    "kernel/Makefile"
+  install \
+    -vDt \
+    "${builddir}/arch/x86" \
+    -m644 \
+    "arch/x86/Makefile"
+  cp \
+    -t \
+    "${builddir}" \
+    -a \
+    "scripts"
+  ln \
+    -srt \
+    "${builddir}" \
+    "${builddir}/scripts/gdb/vmlinux-gdb.py"
   # required when STACK_VALIDATION is enabled
-  install -Dt "$builddir/tools/objtool" tools/objtool/objtool
-
+  install \
+    -vDt \
+    "${builddir}/tools/objtool" \
+    "tools/objtool/objtool"
   # required when DEBUG_INFO_BTF_MODULES is enabled
-  install -Dt "$builddir/tools/bpf/resolve_btfids" tools/bpf/resolve_btfids/resolve_btfids
-
-  echo "Installing headers..."
-  cp -t "$builddir" -a include
-  cp -t "$builddir/arch/x86" -a arch/x86/include
-  install -Dt "$builddir/arch/x86/kernel" -m644 arch/x86/kernel/asm-offsets.s
-
-  install -Dt "$builddir/drivers/md" -m644 drivers/md/*.h
-  install -Dt "$builddir/net/mac80211" -m644 net/mac80211/*.h
-
+  install \
+    -vDt \
+    "${builddir}/tools/bpf/resolve_btfids" \
+    "tools/bpf/resolve_btfids/resolve_btfids"
+  echo \
+    "Installing headers..."
+  cp \
+    -t \
+    "${builddir}" \
+    -a \
+    "include"
+  cp \
+    -t \
+    "${builddir}/arch/x86" \
+    -a \
+    "arch/x86/include"
+  install \
+    -vDt \
+    "${builddir}/arch/x86/kernel" \
+    -m644 \
+    "arch/x86/kernel/asm-offsets.s"
+  install \
+    -vDt \
+    "${builddir}/drivers/md" \
+    -m644 \
+    "drivers/md/"*".h"
+  install \
+    -vDt \
+    "${builddir}/net/mac80211" \
+    -m644 \
+    "net/mac80211/"*".h"
   # https://bugs.archlinux.org/task/13146
-  install -Dt "$builddir/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver.h
-
+  install \
+    -vDt \
+    "${builddir}/drivers/media/i2c" \
+    -m644 \
+    "drivers/media/i2c/msp3400-driver.h"
   # https://bugs.archlinux.org/task/20402
-  install -Dt "$builddir/drivers/media/usb/dvb-usb" -m644 drivers/media/usb/dvb-usb/*.h
-  install -Dt "$builddir/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
-  install -Dt "$builddir/drivers/media/tuners" -m644 drivers/media/tuners/*.h
-
+  install \
+    -vDt \
+    "${builddir}/drivers/media/usb/dvb-usb" \
+    -m644 \
+    "drivers/media/usb/dvb-usb/"*".h"
+  install \
+    -vDt \
+    "${builddir}/drivers/media/dvb-frontends" \
+    -m644 \
+    "drivers/media/dvb-frontends/"*".h"
+  install \
+    -vDt \
+    "${builddir}/drivers/media/tuners" \
+    -m644 \
+    "drivers/media/tuners/"*".h"
   # https://bugs.archlinux.org/task/71392
-  install -Dt "$builddir/drivers/iio/common/hid-sensors" -m644 drivers/iio/common/hid-sensors/*.h
-
-  echo "Installing KConfig files..."
-  find . -name 'Kconfig*' -exec install -Dm644 {} "$builddir/{}" \;
-
-  echo "Installing Rust files..."
-  install -Dt "$builddir/rust" -m644 rust/*.rmeta
-  install -Dt "$builddir/rust" rust/*.so
-
-  echo "Installing unstripped VDSO..."
-  make INSTALL_MOD_PATH="$pkgdir/usr" vdso_install \
+  install \
+    -vDt \
+    "${builddir}/drivers/iio/common/hid-sensors" \
+    -m644 \
+    "drivers/iio/common/hid-sensors/"*".h"
+  echo \
+    "Installing KConfig files..."
+  find \
+    "." \
+    -name \
+      'Kconfig*' \
+    -exec \
+      install \
+      -vDm644 \
+      {} \
+      "${builddir}/{}" \;
+  echo \
+    "Installing Rust files..."
+  install \
+    -vDt \
+    "${builddir}/rust" \
+    -m644 \
+    "rust/"*".rmeta"
+  install \
+    -vDt \
+    "${builddir}/rust" \
+    "rust/"*".so"
+  echo \
+    "Installing unstripped VDSO..."
+  make \
+    INSTALL_MOD_PATH="${pkgdir}/usr" \
+    vdso_install \
     link=  # Suppress build-id symlinks
-
-  echo "Removing unneeded architectures..."
-  local arch
-  for arch in "$builddir"/arch/*/; do
-    [[ $arch = */x86/ ]] && continue
-    echo "Removing $(basename "$arch")"
-    rm -r "$arch"
+  echo \
+    "Removing unneeded architectures..."
+  for arch in "${builddir}/arch/"*"/"; do
+    [[ ${arch} = *"/x86/" ]] && \
+    continue
+    echo \
+      "Removing $(basename \
+                    "${arch}")."
+    rm \
+      -r \
+      "${arch}"
   done
-
-  echo "Removing documentation..."
-  rm -r "$builddir/Documentation"
-
-  echo "Removing broken symlinks..."
-  find -L "$builddir" -type l -printf 'Removing %P\n' -delete
-
-  echo "Removing loose objects..."
-  find "$builddir" -type f -name '*.o' -printf 'Removing %P\n' -delete
-
-  echo "Stripping build tools..."
-  local file
+  echo \
+    "Removing documentation..."
+  rm \
+    -rf \
+    "$builddir/Documentation" || \
+    true
+  echo \
+    "Removing broken symlinks..."
+  find \
+    -L \
+    "${builddir}" \
+    -type \
+      "l" \
+    -printf \
+      'Removing %P\n' \
+    -delete
+  echo \
+    "Removing loose objects..."
+  find \
+    "${builddir}" \
+    -type \
+      "f" \
+    -name \
+      '*.o' \
+    -printf \
+      'Removing %P\n' \
+      -delete
+  echo \
+    "Stripping build tools..."
   while read -rd '' file; do
-    case "$(file -Sib "$file")" in
-      application/x-sharedlib\;*)      # Libraries (.so)
-        strip -v $STRIP_SHARED "$file" ;;
-      application/x-archive\;*)        # Libraries (.a)
-        strip -v $STRIP_STATIC "$file" ;;
-      application/x-executable\;*)     # Binaries
-        strip -v $STRIP_BINARIES "$file" ;;
-      application/x-pie-executable\;*) # Relocatable binaries
-        strip -v $STRIP_SHARED "$file" ;;
+    case "$(file \
+              -Sib \
+              "${file}")" in
+      # Libraries (.so)
+      application/x-sharedlib\;*)
+        strip \
+          -v \
+            $STRIP_SHARED \
+            "${file}" ;;
+      # Libraries (.a)
+      application/x-archive\;*)
+        strip \
+          -v \
+          $STRIP_STATIC \
+          "${file}" ;;
+      # Binaries
+      application/x-executable\;*)
+        strip \
+          -v \
+          $STRIP_BINARIES \
+          "${file}" ;;
+      # Relocatable binaries
+      application/x-pie-executable\;*)
+        strip \
+          -v \
+          $STRIP_SHARED \
+          "${file}" ;;
     esac
-  done < <(find "$builddir" -type f -perm -u+x ! -name vmlinux -print0)
-
-  echo "Stripping vmlinux..."
-  strip -v $STRIP_STATIC "$builddir/vmlinux"
-
-  echo "Adding symlink..."
-  mkdir -p "$pkgdir/usr/src"
-  ln -sr "$builddir" "$pkgdir/usr/src/$pkgbase"
+  done < <(find \
+             "${builddir}" \
+             -type \
+               "f" \
+             -perm \
+               -u+x \
+           ! -name \
+               "vmlinux" \
+             -print0)
+  echo \
+    "Stripping vmlinux..."
+  strip \
+    -v \
+    $STRIP_STATIC \
+    "${builddir}/vmlinux"
+  echo \
+    "Adding symlink..."
+  mkdir \
+    -p \
+    "${pkgdir}/usr/src"
+  ln \
+    -sr \
+    "${builddir}" \
+    "${pkgdir}/usr/src/${pkgbase}"
 }
 
 _package-docs() {
-  pkgdesc="Documentation for the $pkgdesc kernel"
-
-  cd $_srcname
-  local builddir="$pkgdir/usr/lib/modules/$(<version)/build"
-
-  echo "Installing documentation..."
-  local src dst
+  local \
+    builddir \
+    dst \
+    src
+  builddir="${pkgdir}/usr/lib/modules/$(<version)/build"
+  _pkgdesc=(
+    "Documentation for the Linux kernel."
+  )
+  pkgdesc="${_pkgdesc[*]}"
+  cd \
+    "$_tarname}"
+  echo \
+    "Installing documentation..."
   while read -rd '' src; do
     dst="${src#Documentation/}"
     dst="$builddir/Documentation/${dst#output/}"
-    install -Dm644 "$src" "$dst"
-  done < <(find Documentation -name '.*' -prune -o ! -type d -print0)
-
-  echo "Adding symlink..."
-  mkdir -p "$pkgdir/usr/share/doc"
-  ln -sr "$builddir/Documentation" "$pkgdir/usr/share/doc/$pkgbase"
+    install \
+      -vDm644 \
+      "${src}" \
+      "${dst}"
+  done < <(find \
+             "Documentation" \
+             -name \
+               '.*' \
+             -prune \
+             -o \
+           ! -type \
+               "d" \
+             -print0)
+  echo \
+    "Adding symlink..."
+  mkdir \
+    -p \
+    "${pkgdir}/usr/share/doc"
+  ln \
+    -sr \
+    "${builddir}/Documentation" \
+    "${pkgdir}/usr/share/doc/${pkgbase}"
 }
 
 pkgname=(
-  "$pkgbase"
-  "$pkgbase-headers"
-  "$pkgbase-docs"
+  "${_pkg}"
+  "${_pkg}-headers"
 )
+if [[ "${_docs}" == "true" ]]; then
+  pkgname+=(
+    "${_pkg}-docs"
+  )
+fi
 for _p in "${pkgname[@]}"; do
-  eval "package_$_p() {
-    $(declare -f "_package${_p#$pkgbase}")
-    _package${_p#$pkgbase}
+  eval \
+    "package_${_p}() {
+      $(declare \
+          -f \
+          "_package${_p#$_pkg}")
+    _package${_p#$_pkg}
   }"
 done
 
