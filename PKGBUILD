@@ -142,7 +142,7 @@ if [[ "${_evmfs}" == "true" ]]; then
   _src="${_tarname}.tar.xz::${_evmfs_uri}"
   _patch_src="${_patchname}.zst::${_evmfs_patch_uri}"
   _sig_src="${_tarname}.tar.xz.sig::${_evmfs_sig_uri}"
-  _patch_sig_src="${_patchname}.zst.sig::${_evmfs_sig_uri}"
+  _patch_sig_src="${_patchname}.zst.sig::${_evmfs_patch_sig_uri}"
   source+=(
     "${_sig_src}"
   )
