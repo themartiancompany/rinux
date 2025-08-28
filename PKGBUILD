@@ -97,14 +97,25 @@ options=(
   "!debug"
   "!strip"
 )
+_evmfs_ns="0x87003Bd6C074C713783df04f36517451fF34CBEf"
+_evmfs_sig_ns="${_evmfs_ns}"
+# https://www.kernel.org/pub/linux/kernel/v6.x/sha256sums.asc
 _sum='12b50c89925438d9cd7385a0cafc9c433e6562ac5df00a21889fce9f548d65b0'
+# Kernel.org
+_sig_sum="658b804170201b5457e50c779f2cd6605889a58d2bc852f4458f85f0590a2e01"
+# The Martian Company
+_sig_sum="ede44158ff30c94c7e8cee273d691a73dd96cb9fce7f16afc7f93167eae4bd7b"
 _patch_sum='70f591ba14be9789caa2affc5a5f9e404f9753ecd7ae1ef2fcbafeb285f590dd'
+_patch_sig_sum="fad84783de28bf0a23392e8da658d86a9ff1642e089fda2eb70a2990776068b9"
 _config_sum='eed83e8a6c1524a7ad7e5d836cc6d7fa291b7c8e205dd7dd68dffaae22b77812'
-_srcname="${_pkg}-${pkgver%.*}"
-_tarname="${_srcname}"
+_chain_id="100"
+_fs="0x69470b18f8b8b5f92b48f6199dcb147b4be96571"
 _srctag="v${pkgver%.*}-${pkgver##*.}"
 _tag_name="pkgver"
 _tag="${_srctag}"
+_srcname="${_pkg}-${pkgver%.*}"
+_tarname="${_srcname}"
+_patchname="${_pkg}-${_tag}.patch"
 _domain="https://cdn.kernel.org"
 _http_archive_dir="https://cdn.${_domain}/pub/${_pkg}/kernel"
 _http_uri="${_http_archive_dir}/v${pkgver%%.*}.x/${_tarname}.tar.xz"
@@ -112,40 +123,51 @@ _http_sig_uri="${_http_archive_dir}/v${pkgver%%.*}.x/${_srcname}.tar.sign"
 _http_src="${_tarname}.tar.xz::${_http_uri}"
 _http_sig_src="${_tarname}.tar.sign::${_http_sig_uri}"
 _http_patch_dir="${url}/releases/download"
-_http_patch_uri="${_http_patch_dir}/${_tag}/${_pkg}-${_tag}.patch.zst"
+_http_patch_uri="${_http_patch_dir}/${_tag}/${_patchname}.zst"
 _http_patch_sig_uri="${_http_patch_uri}.sig"
 _http_patch_src="${_tarname}.tar.sign::${_http_sig_uri}"
 _http_patch_sig_uri="${_http_patch_uri}.sig"
-_http_patch_src="${_pkg}-${_tag}.patch.zst::${_http_patch_uri}"
-_http_patch_sig_src="${_pkg}-${_tag}.patch.zst.sig::${_http_patch_sig_uri}"
+_http_patch_src="${_patchname}.zst::${_http_patch_uri}"
+_http_patch_sig_src="${_patchname}.zst.sig::${_http_patch_sig_uri}"
+_evmfs_dir="evmfs://${_chain_id}/${_fs}/${_evmfs_ns}"
+_evmfs_sig_dir="evmfs://${_chain_id}/${_fs}/${_evmfs_sig_ns}"
+_evmfs_uri="${_evmfs_dir}/${_sum}"
+_evmfs_sig_uri="${_evmfs_sig_dir}/${_sig_sum}"
+_evmfs_patch_uri="${_evmfs_dir}/${_patch_sum}"
+_evmfs_patch_sig_uri="${_evmfs_sig_dir}/${_patch_sig_sum}"
 _patch_uri=""
-if [[ "${_git}" == "false" ]]; then
+source=()
+sha256sums=()
+if [[ "${_evmfs}" == "true" ]]; then
+  _src="${_tarname}.tar.xz::${_evmfs_uri}"
+  _patch_src="${_patchname}.zst::${_evmfs_patch_uri}"
+  _sig_src="${_tarname}.tar.xz.sig::${_evmfs_sig_uri}"
+  _patch_sig_src="${_patchname}.zst.sig::${_evmfs_sig_uri}"
+  source+=(
+    "${_sig_src}"
+  )
+  sha256sums+=(
+    "${_sig_sum}"
+  )
+elif [[ "${_git}" == "false" ]]; then
   _src="${_http_src}"
   _sig_src="${_http_sig_src}"
-  _patch_uri="${_http_patch_uri}"
-  _patch_sig_uri="${_http_patch_sig_uri}"
+  _patch_src="${_patchname}.zst::${_http_patch_uri}"
+  _patch_sig_src="${_patchname}.zst.sig::${_http_patch_sig_uri}"
 fi
-source=(
+source+=(
   "${_src}"
   "${_sig_src}"
-  "${url}/releases/download/${_srctag}/${_pkg}-${_srctag}.patch.zst"
+  "${_patch_src}"
+  "${_patch_sig_src}"
   # the main kernel config file
   "config"
 )
-validpgpkeys=(
-  # Linus Torvalds
-  "ABAF11C65A2970B130ABE3C479BE3E4300411886"
-  # Greg Kroah-Hartman
-  "647F28654894E3BD457199BE38DBBDC86092693E"
-  # Jan Alexander Steffens (heftig)
-  "83BC8889351B5DEBBB68416EB8AC08600F108CDF"
-)
-# https://www.kernel.org/pub/linux/kernel/v6.x/sha256sums.asc
-sha256sums=(
+sha256sums+=(
   "${_sum}"
-  'SKIP'
+  "${_sig_sum}"
   "${_patch_sum}"
-  'SKIP'
+  "${_patch_sig_sum}"
   "${_config_sum}"
 )
 b2sums=(
@@ -155,13 +177,30 @@ b2sums=(
   'SKIP'
   'd024109a908086d8220c02458bf669a4ba6167f3b12e27233a248454c9b8cd8aa3de9fc2d187caa617514da6ff349c1083544827354f9096de82196c793637fb'
 )
+validpgpkeys=(
+  # Linus Torvalds
+  "ABAF11C65A2970B130ABE3C479BE3E4300411886"
+  # Greg Kroah-Hartman
+  "647F28654894E3BD457199BE38DBBDC86092693E"
+  # Truocolo
+  #   <truocolo@aol.com>
+  '97E989E6CF1D2C7F7A41FF9F95684DBE23D6A3E9'
+  #   <truocolo@0x6E5163fC4BFc1511Dbe06bB605cc14a3e462332b>
+  'F690CBC17BD1F53557290AF51FC17D540D0ADEED'
+  # Pellegrino Prevete (dvorak)
+  #   <dvorak@0x87003Bd6C074C713783df04f36517451fF34CBEf>
+  '12D8E3D7888F741E89F86EE0FEC8567A644F1D16'
+  # Jan Alexander Steffens (heftig)
+  "83BC8889351B5DEBBB68416EB8AC08600F108CDF"
+)
 
 export \
   KBUILD_BUILD_HOST="archlinux" \
   KBUILD_BUILD_USER="${pkgbase}" \
   KBUILD_BUILD_TIMESTAMP="$( \
-    date \
-      -Ru"${SOURCE_DATE_EPOCH:+d @$SOURCE_DATE_EPOCH}")"
+  date \
+    -Ru"${SOURCE_DATE_EPOCH:+d \
+    @$SOURCE_DATE_EPOCH}")"
 
 prepare() {
   local \
