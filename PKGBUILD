@@ -512,19 +512,19 @@ _package-headers() {
       application/x-sharedlib\;*)
         strip \
           -v \
-            $STRIP_SHARED \
+            ${STRIP_SHARED} \
             "${file}" ;;
       # Libraries (.a)
       application/x-archive\;*)
         strip \
           -v \
-          $STRIP_STATIC \
+          ${STRIP_STATIC} \
           "${file}" ;;
       # Binaries
       application/x-executable\;*)
         strip \
           -v \
-          $STRIP_BINARIES \
+          ${STRIP_BINARIES} \
           "${file}" ;;
       # Relocatable binaries
       application/x-pie-executable\;*)
@@ -556,30 +556,31 @@ _package-headers() {
   ln \
     -sr \
     "${builddir}" \
-    "${pkgdir}/usr/src/${pkgbase}"
+    "${pkgdir}/usr/src/${pkgbase}" || \
+  true
 }
 
 _package-docs() {
   local \
     builddir \
-    dst \
-    src
+    _dst \
+    _src
   builddir="${pkgdir}/usr/lib/modules/$(<version)/build"
   _pkgdesc=(
     "Documentation for the Linux kernel."
   )
   pkgdesc="${_pkgdesc[*]}"
   cd \
-    "$_tarname}"
+    "${_tarname}"
   echo \
     "Installing documentation..."
   while read -rd '' src; do
-    dst="${src#Documentation/}"
-    dst="$builddir/Documentation/${dst#output/}"
+    _dst="${_src#Documentation/}"
+    _dst="$builddir/Documentation/${_dst#output/}"
     install \
       -vDm644 \
-      "${src}" \
-      "${dst}"
+      "${_src}" \
+      "${_dst}"
   done < <(find \
              "Documentation" \
              -name \
@@ -597,7 +598,8 @@ _package-docs() {
   ln \
     -sr \
     "${builddir}/Documentation" \
-    "${pkgdir}/usr/share/doc/${pkgbase}"
+    "${pkgdir}/usr/share/doc/${pkgbase}" || \
+  true
 }
 
 pkgname=(
