@@ -236,8 +236,11 @@ prepare() {
     -s \
     kernelrelease > \
     "version"
+  cp \
+    "version" \
+    "${srcdir}/version"
   echo \
-    "Prepared ${pkgbase} version $(<version)."
+    "Prepared ${pkgbase} version $(<"${srcdir}/version")."
 }
 
 build() {
@@ -259,7 +262,9 @@ build() {
 _package() {
   local \
     modulesdir
-  modulesdir="${pkgdir}/usr/lib/modules/$(<version)"
+  cd \
+    "${_tarname}"
+  modulesdir="${pkgdir}/usr/lib/modules/$(<"${srcdir}/version")"
   _pkgdesc=(
     "The Linux kernel and modules."
   )
@@ -284,8 +289,6 @@ _package() {
     "virtualbox-guest-modules-arch"
     "wireguard-arch"
   )
-  cd \
-    "${_tarname}"
   echo \
     "Installing boot image..."
   # systemd expects to find the kernel
@@ -323,7 +326,7 @@ _package-headers() {
     arch \
     builddir \
     file
-  builddir="${pkgdir}/usr/lib/modules/$(<version)/build"
+  builddir="${pkgdir}/usr/lib/modules/$(<"${srcdir}/version")/build"
   _pkgdesc=(
     "Headers and scripts for"
     "building modules for the"
@@ -563,7 +566,7 @@ _package-docs() {
     builddir \
     _dst \
     _src
-  builddir="${pkgdir}/usr/lib/modules/$(<version)/build"
+  builddir="${pkgdir}/usr/lib/modules/$(<"${srcdir}/version")/build"
   _pkgdesc=(
     "Documentation for the Linux kernel."
   )
@@ -615,8 +618,8 @@ for _p in "${pkgname[@]}"; do
       $(declare \
           -f \
           "_package${_p#$_pkg}")
-    _package${_p#$_pkg}
-  }"
+      _package${_p#$_pkg}
+     }"
 done
 
 # vim:set ts=8 sts=2 sw=2 et:
