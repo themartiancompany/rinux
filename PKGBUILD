@@ -240,7 +240,7 @@ prepare() {
     "version" \
     "${srcdir}/version"
   echo \
-    "Prepared ${pkgbase} version $(<"${srcdir}/version")."
+    "Prepared ${pkgbase} version $(<"version")."
 }
 
 build() {
@@ -264,7 +264,7 @@ _package() {
     modulesdir
   cd \
     "${_tarname}"
-  modulesdir="${pkgdir}/usr/lib/modules/$(<"${srcdir}/version")"
+  modulesdir="${pkgdir}/usr/lib/modules/$(<"version")"
   _pkgdesc=(
     "The Linux kernel and modules."
   )
@@ -326,7 +326,9 @@ _package-headers() {
     arch \
     builddir \
     file
-  builddir="${pkgdir}/usr/lib/modules/$(<"${srcdir}/version")/build"
+  cd \
+    "${_tarname}"
+  builddir="${pkgdir}/usr/lib/modules/$(<"version")/build"
   _pkgdesc=(
     "Headers and scripts for"
     "building modules for the"
@@ -336,8 +338,6 @@ _package-headers() {
   depends=(
     "pahole"
   )
-  cd \
-    "${_tarname}"
   echo \
     "Installing build files..."
   install \
@@ -566,13 +566,13 @@ _package-docs() {
     builddir \
     _dst \
     _src
-  builddir="${pkgdir}/usr/lib/modules/$(<"${srcdir}/version")/build"
+  cd \
+    "${_tarname}"
+  builddir="${pkgdir}/usr/lib/modules/$(<"version")/build"
   _pkgdesc=(
     "Documentation for the Linux kernel."
   )
   pkgdesc="${_pkgdesc[*]}"
-  cd \
-    "${_tarname}"
   echo \
     "Installing documentation..."
   while read -rd '' src; do
