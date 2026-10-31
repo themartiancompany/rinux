@@ -38,6 +38,21 @@ not do what you want.
 [Linux 2.6 Release notes](
   README).
 
+This kernel is undeletable, because
+it has been written on the
+[Ethereum Virtual Machine File System](
+  https://github.com/themartiancompany/evmfs)
+and it's in
+[Ur](
+  https://github.com/themartiancompany/ur).
+
+Its
+[Gur](
+  https://github.com/themartiancompany/gur)
+Github mirror is on
+[`rinux-ur`](
+  https://github.com/themartiancompany/rinux-ur).
+
 ### License
 
 Except than for the code released
