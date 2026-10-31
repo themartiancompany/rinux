@@ -38,7 +38,7 @@ not do what you want.
 [Linux 2.6 Release notes](
   README).
 
-This kernel is undeletable, because
+Version 6.15 of the Rinux kernel is undeletable, because
 it has been written on the
 [Ethereum Virtual Machine File System](
   https://github.com/themartiancompany/evmfs)
