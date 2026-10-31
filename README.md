@@ -53,6 +53,11 @@ Github mirror is on
 [`rinux-ur`](
   https://github.com/themartiancompany/rinux-ur).
 
+The Rinux kernel is part of the
+[DogeOS](
+  https://github.com/themartiancompany/dogeos)
+as the kernel of the *DogeOS Rinux base*.
+
 ### License
 
 Except than for the code released
